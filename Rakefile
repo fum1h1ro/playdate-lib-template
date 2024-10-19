@@ -45,7 +45,7 @@ def define_cmake_make_task(target, type, option)
   desc "Generate Makefile (#{target}, #{type.downcase})"
   task type.downcase => [build_dir] do |t|
     cd t.source do
-      sh %(LIB_NAME="#{PROJECT_NAME}" cmake ../.. -DCMAKE_BUILD_TYPE=#{type} #{option}) unless File.exist?('Makefile')
+      sh %(cmake ../.. -DCMAKE_BUILD_TYPE=#{type} #{option}) unless File.exist?('Makefile')
     end
   end
 end
@@ -56,7 +56,7 @@ def define_cmake_xcode_task(target, option)
   desc "Generate Xcode project (#{target})"
   task target.downcase => build_dir do |t|
     cd t.source do
-      sh %(LIB_NAME="#{PROJECT_NAME}" cmake ../.. #{option} -G Xcode)
+      sh %(cmake ../.. #{option} -G Xcode)
       sh 'open .'
     end
   end

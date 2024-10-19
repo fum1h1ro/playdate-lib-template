@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 set(CMAKE_C_STANDARD 11)
 
 set(ENVSDK $ENV{PLAYDATE_SDK_PATH})
-set(LIB_NAME $ENV{LIB_NAME})
+get_filename_component(LIB_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 if (NOT ${ENVSDK} STREQUAL "")
 	# Convert path from Windows
