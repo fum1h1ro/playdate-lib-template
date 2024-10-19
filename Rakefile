@@ -145,6 +145,8 @@ task :update do
     'Rakefile',
     'compile_flags.txt.in',
     'acutest.h',
+    'examples/CMakeLists.txt',
+    'examples/Rakefile',
   ].each do |path|
     update_file(path)
   end
