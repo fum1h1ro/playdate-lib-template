@@ -1,0 +1,119 @@
+require 'rake/clean'
+
+PWD = Rake.application.original_dir
+cd PWD
+
+def sdk_root
+  env = ENV['PLAYDATE_SDK_PATH']
+  return env unless env.nil?
+
+  File.read(File.expand_path('~/.Playdate/config')).each_line do |x|
+    ssv = x.split(/\s+/)
+    return ssv[1] if ssv[0] == 'SDKRoot'
+  end
+  raise 'cannot found SDK'
+end
+
+SDK_ROOT = sdk_root
+PLAYDATE_SIMULATOR = "#{SDK_ROOT}/bin/Playdate Simulator.app".freeze
+BUILD_DIR = '_build'.freeze
+PDX_FILES = FileList['*.pdx']
+BUILD_TARGETS = %w[Simulator Device].freeze
+BUILD_TYPES = %w[Debug Release].freeze
+
+CLEAN.include(BUILD_DIR)
+CLEAN.include('Source/pdex.*')
+CLEAN.include('compile_flags.txt')
+CLEAN.include('CMakeLists.txt') if File.exist?('CMakeLists.txt') && File.symlink?('CMakeLists.txt')
+CLOBBER.include(PDX_FILES)
+
+def all_targets_and_types(&block)
+  BUILD_TARGETS.each do |target|
+    BUILD_TYPES.each do |type|
+      block.call(target.downcase, type.downcase)
+    end
+  end
+end
+
+def define_cmake_make_task(target, type, option)
+  build_dir = "#{BUILD_DIR}/#{target}.#{type.downcase}"
+  directory build_dir
+  desc "Generate Makefile (#{target}, #{type.downcase})"
+  task type.downcase => [build_dir] do |t|
+    ln_sf '../CMakeLists.txt', 'CMakeLists.txt' unless File.exist?('CMakeLists.txt')
+    cd t.source do
+      sh "cmake ../.. -DCMAKE_BUILD_TYPE=#{type} #{option}" unless File.exist?('Makefile')
+    end
+  end
+end
+
+def define_cmake_xcode_task(target, option)
+  build_dir = "#{BUILD_DIR}/#{target}"
+  directory build_dir
+  desc "Generate Xcode project (#{target})"
+  task target.downcase => build_dir do |t|
+    ln_sf '../CMakeLists.txt', 'CMakeLists.txt' unless File.exist?('CMakeLists.txt')
+    cd t.source do
+      sh "cmake ../.. #{option} -G Xcode"
+      sh 'open .'
+    end
+  end
+end
+
+def define_build_task(target, type)
+  build_dir = "#{BUILD_DIR}/#{target}.#{type.downcase}"
+  desc "Build (#{target}, #{type.downcase})"
+  task type.downcase => "cmake:#{target}:#{type.downcase}" do
+    cd build_dir do
+      FileList['*.dylib', '*.elf'].each do |binfile|
+        rm_f binfile
+      end
+      sh 'make all'
+    end
+  end
+end
+
+task :default do
+  p Rake.application.original_dir
+end
+
+task :cmake do
+  all_targets_and_types do |target, type|
+    sh "rake cmake:#{target}:#{type}"
+  end
+end
+
+task :build do
+  all_targets_and_types do |target, type|
+    dir = "#{BUILD_DIR}/#{target}.#{type}"
+    sh "rake build:#{target}:#{type}" if Dir.exist?(dir)
+  end
+end
+
+namespace :cmake do
+  namespace :simulator do
+    define_cmake_make_task('simulator', 'Debug', '')
+    define_cmake_make_task('simulator', 'Release', '')
+  end
+  namespace :device do
+    define_cmake_make_task('device', 'Debug', "-DCMAKE_TOOLCHAIN_FILE=#{SDK_ROOT}/C_API/buildsupport/arm.cmake")
+    define_cmake_make_task('device', 'Release', "-DCMAKE_TOOLCHAIN_FILE=#{SDK_ROOT}/C_API/buildsupport/arm.cmake")
+  end
+  define_cmake_xcode_task('xcode', '')
+end
+
+namespace :build do
+  namespace :simulator do
+    define_build_task('simulator', 'Debug')
+    define_build_task('simulator', 'Release')
+  end
+  namespace :device do
+    define_build_task('device', 'Debug')
+    define_build_task('device', 'Release')
+  end
+end
+
+task :run do
+  raise "no pdx file" if PDX_FILES.empty?
+  sh "open \"#{PLAYDATE_SIMULATOR}\" #{PDX_FILES[0]}"
+end

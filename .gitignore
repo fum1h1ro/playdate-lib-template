@@ -1,3 +1,6 @@
-/_build
-/_output
-/compile_flags.txt
+_build
+_output
+compile_flags.txt
+*.pdx
+*.dylib
+examples/*/CMakeLists.txt
