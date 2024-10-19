@@ -77,6 +77,10 @@ def define_build_task(target, type)
   end
 end
 
+def update_file(path)
+  print "curl --create-dirs -s -o #{path} https://raw.githubusercontent.com/fum1h1ro/playdate-lib-template/refs/heads/main/#{path}"
+end
+
 task :default do
 end
 
@@ -133,5 +137,17 @@ task test: ['build:simulator:debug'] do
     end
     print("================================================================================\n")
     raise
+  end
+end
+
+desc "Update"
+task :update do
+  [
+    'CMakeLists.txt',
+    'Rakefile',
+    'compile_flags.txt.in',
+    'acutest.h',
+  ].each do |path|
+    update_file(path)
   end
 end
