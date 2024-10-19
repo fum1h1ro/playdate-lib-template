@@ -78,7 +78,7 @@ def define_build_task(target, type)
 end
 
 def update_file(path)
-  sh "curl --create-dirs -s --verbose -o #{path} https://raw.githubusercontent.com/fum1h1ro/playdate-lib-template/refs/heads/main/#{path}"
+  sh "curl --create-dirs -s -o #{path} https://raw.githubusercontent.com/fum1h1ro/playdate-lib-template/refs/heads/main/#{path}"
 end
 
 task :default do
