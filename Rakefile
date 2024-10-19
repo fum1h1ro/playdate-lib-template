@@ -1,7 +1,7 @@
 require 'rake/clean'
 
 CURRENT_DIR = File.dirname(__FILE__)
-PROJECT_NAME = File.basename(CURRENT_DIR).gsub(/[^a-zA-Z0-9]/, '_')
+PROJECT_NAME = File.basename(CURRENT_DIR).gsub(/[^a-zA-Z0-9-]/, '_')
 
 SDK_ROOT = lambda do
   env = ENV['PLAYDATE_SDK_PATH']
